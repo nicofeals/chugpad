@@ -1,0 +1,46 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+    function isOwner(song) {
+      return song.owner == request.auth.uid;
+    }
+    function isViewer(song) {
+      return request.auth.token.email in song.viewers;
+    }
+    function isEditor(song) {
+      return request.auth.token.email in song.editors;
+    }
+    // Editors may change the tab but never who it is shared with.
+    function sharingUnchanged() {
+      return request.resource.data.owner == resource.data.owner
+        && request.resource.data.viewers == resource.data.viewers
+        && request.resource.data.editors == resource.data.editors
+        && request.resource.data.anyone == resource.data.anyone;
+    }
+
+    match /songs/{songId} {
+      // Opening one song: the owner, people it is shared with, or anyone signed in when link access is on.
+      allow get: if signedIn() && (isOwner(resource.data) || isViewer(resource.data) || isEditor(resource.data)
+        || resource.data.anyone in ['view', 'edit']);
+
+      // Listing: only your own songs and songs shared with your email address.
+      allow list: if signedIn() && (isOwner(resource.data) || isViewer(resource.data) || isEditor(resource.data));
+
+      allow create: if signedIn()
+        && request.resource.data.owner == request.auth.uid
+        && request.resource.data.viewers is list
+        && request.resource.data.editors is list;
+
+      allow update: if signedIn() && (
+        (isOwner(resource.data) && request.resource.data.owner == resource.data.owner)
+        || ((isEditor(resource.data) || resource.data.anyone == 'edit') && sharingUnchanged())
+      );
+
+      allow delete: if signedIn() && isOwner(resource.data);
+    }
+  }
+}
