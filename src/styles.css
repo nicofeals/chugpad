@@ -148,6 +148,31 @@ select {
 .ib:disabled {
   opacity: 0.35;
 }
+.ib[hidden] {
+  display: none;
+}
+#lockB {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--dim);
+}
+#lockB svg {
+  width: 13px;
+  height: 13px;
+  fill: currentColor;
+}
+#lockB.on {
+  border-color: var(--acc);
+  color: var(--ink);
+  background: color-mix(in srgb, var(--acc) 14%, transparent);
+}
+body.locked .grid {
+  cursor: default;
+}
+.tg:disabled {
+  opacity: 0.35;
+}
 #tabs {
   display: flex;
   gap: 6px;

@@ -2,7 +2,17 @@ import { audioState, applyMix, preview } from '../audio/engine';
 import { clampLoop, play, stop } from '../audio/playback';
 import { qs, BASS_TUNINGS, GRIDS, GUITAR_TUNINGS, clamp, clone, newId, rowsOf, stepsOf } from '../core/constants';
 import { drumPattern, fillFrom } from '../core/notes';
-import { library, appState, currentTrack, blankSong, newTrack, normalize, strip, tempoAt } from '../core/state';
+import {
+  library,
+  appState,
+  currentTrack,
+  blankSong,
+  newTrack,
+  normalize,
+  strip,
+  tempoAt,
+  LOCK_KEY
+} from '../core/state';
 import { asciiTab, buildMidi } from '../io/export';
 import { gpExport, loadAlphaTab } from '../io/guitarpro';
 import {
@@ -81,6 +91,16 @@ export const actionHandlers = {
     appState.pad = !appState.pad;
     renderPad();
     renderTransport();
+  },
+  lock() {
+    appState.locked = !appState.locked;
+    try {
+      localStorage.setItem(LOCK_KEY, appState.locked ? '1' : '0');
+    } catch (e) {}
+    renderTop();
+    renderPad();
+    renderTransport();
+    toast(appState.locked ? 'Score locked. Taps only move the cursor.' : 'Editing. Taps write notes.');
   },
   undo() {
     swapHistory(appState.undo, appState.redo);

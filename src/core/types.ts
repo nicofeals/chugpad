@@ -88,6 +88,8 @@ export interface AppState {
   clip: any;
   scope: string;
   pad: boolean;
+  /** Score locked: taps only move the cursor, nothing gets written. Remembered across visits. */
+  locked: boolean;
   undo: string[];
   redo: string[];
   sync: string;

@@ -3,6 +3,14 @@ import { BASS_TUNINGS, GRIDS, GUITAR_TUNINGS, TONES, clamp, newId, stepsOf } fro
 
 /* ================= state ================= */
 export const STORAGE_KEY = 'chugpad.v1';
+export const LOCK_KEY = 'chugpad.locked';
+const storedLock = () => {
+  try {
+    return typeof localStorage !== 'undefined' && localStorage.getItem(LOCK_KEY) === '1';
+  } catch (e) {
+    return false;
+  }
+};
 export const library: Library = { songs: {}, currentId: null };
 export const appState: AppState = {
   song: null,
@@ -20,6 +28,7 @@ export const appState: AppState = {
   clip: null,
   scope: 'all',
   pad: true,
+  locked: storedLock(),
   undo: [],
   redo: [],
   sync: 'local'

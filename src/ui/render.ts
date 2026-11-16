@@ -101,6 +101,16 @@ export function placeCursor(scroll = true) {
 export function renderTop() {
   qs('#titleB').innerHTML =
     `${escapeHtml(appState.song.title)}<small>${appState.song.tempo} bpm${appState.song.bars.some((b, i) => i && b.t) ? ' +' : ''}</small>${!canEdit() ? '<span class="tag">view only</span>' : isShared(appState.song) || !isMine(appState.song) ? '<span class="tag">shared</span>' : ''}`;
+  const lock = qs('#lockB'),
+    locked = appState.locked && canEdit();
+  lock.hidden = !canEdit();
+  lock.classList.toggle('on', locked);
+  lock.setAttribute('aria-pressed', String(locked));
+  lock.title = locked ? 'Score locked: tap to edit' : 'Editing: tap to lock the score';
+  lock.innerHTML = locked
+    ? `<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 5V3.5a3 3 0 0 1 6 0V5h.5a1 1 0 0 1 1 1v4.5a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm1.5 0h3V3.5a1.5 1.5 0 0 0-3 0z"/></svg><span>Locked</span>`
+    : `<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M8.6 1.2l2.2 2.2-6.9 6.9-2.9.7.7-2.9z"/></svg><span>Edit</span>`;
+  document.body.classList.toggle('locked', locked);
   qs('#undoB').disabled = !appState.undo.length;
   qs('#redoB').disabled = !appState.redo.length;
   qs('#tabs').innerHTML = appState.song.tracks
@@ -123,7 +133,8 @@ export function renderTransport() {
       : `Loop ${appState.loop.a + 1}–${appState.loop.b + 1}`
     : 'Loop';
   qs('#metroB').classList.toggle('on', appState.metro);
-  qs('#padB').classList.toggle('on', appState.pad);
+  qs('#padB').classList.toggle('on', appState.pad && !appState.locked);
+  qs('#padB').disabled = appState.locked && canEdit();
   if (!appState.playing) qs('#pos').textContent = `Bar ${appState.cur.bar + 1} of ${appState.song.bars.length}`;
 }
 export function renderPad() {
@@ -133,8 +144,9 @@ export function renderPad() {
     pad.innerHTML = `<div class="ro"><span><b>View only.</b> You can read and play this song, but not change it.</span><button class="b" data-act="dupsong">Make my own copy</button></div>`;
     return;
   }
-  pad.hidden = !appState.pad;
-  if (!appState.pad) return;
+  // locked: hide the keypad, more room to read the score
+  pad.hidden = !appState.pad || appState.locked;
+  if (pad.hidden) return;
   const tr = currentTrack();
   if (tr.type === 'drums') {
     pad.innerHTML = `<div class="row">

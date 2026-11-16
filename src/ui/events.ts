@@ -10,6 +10,31 @@ import { placeCursor, renderPad, renderTop, toast } from './render';
 import { closeSheet, refreshSheet, sheetKind } from './sheets';
 
 /* ================= events ================= */
+// tap vs scroll: a grid tap only counts if the finger barely moved and the score wasn't already scrolling
+// (a tap that stops a flick is a "stop", not a note)
+const tap = { x: 0, y: 0, moved: false, scrolling: false };
+let lastScroll = 0,
+  lockHintAt = 0;
+document.addEventListener(
+  'scroll',
+  () => {
+    lastScroll = performance.now();
+  },
+  true
+);
+document.addEventListener('pointerdown', (e: any) => {
+  if (!e.target.closest || !e.target.closest('.grid')) return;
+  tap.x = e.clientX;
+  tap.y = e.clientY;
+  tap.moved = false;
+  tap.scrolling = performance.now() - lastScroll < 150;
+});
+document.addEventListener('pointermove', (e: any) => {
+  if (!tap.moved && Math.hypot(e.clientX - tap.x, e.clientY - tap.y) > 10) tap.moved = true;
+});
+document.addEventListener('pointercancel', () => {
+  tap.moved = true;
+});
 document.addEventListener('click', (e: any) => {
   const b = e.target.closest('[data-act]');
   if (b) {
@@ -29,6 +54,7 @@ document.addEventListener('click', (e: any) => {
   }
   const g = e.target.closest('.grid');
   if (!g) return;
+  if (tap.moved || tap.scrolling) return;
   const i = +g.dataset.i,
     r = g.getBoundingClientRect(),
     tr = currentTrack(),
@@ -37,6 +63,16 @@ document.addEventListener('click', (e: any) => {
   const step = clamp(Math.floor(((e.clientX - r.left) / r.width) * st), 0, st - 1),
     row = clamp(Math.floor(((e.clientY - r.top) / r.height) * rows), 0, rows - 1);
   if (tr.type === 'drums') {
+    if (appState.locked && canEdit()) {
+      // locked: select the bar, leave the hits alone
+      appState.cur.bar = i;
+      placeCursor(false);
+      if (performance.now() - lockHintAt > 8000) {
+        lockHintAt = performance.now();
+        toast('Score locked. Tap Locked at the top to edit.');
+      }
+      return;
+    }
     toggleDrum(i, step, row);
     return;
   }
@@ -110,7 +146,7 @@ document.addEventListener('keydown', (e: any) => {
     actionHandlers.mv({ d: mv });
     return;
   }
-  if (!canEdit()) return;
+  if (!canEdit() || appState.locked) return;
   if (/^[0-9]$/.test(k)) {
     // a quick 1 or 2 followed by another digit makes a two-digit fret
     const now = performance.now(),
