@@ -33,14 +33,101 @@ export const BASS_TUNINGS = {
   '5-string B standard': [43, 38, 33, 28, 23],
   '5-string Drop A': [43, 38, 33, 28, 21]
 };
+/* Amp models (see audio/engine.ts).
+   guitar: tight = pre-drive highpass (Hz), boost = screamer-style mid push before the amp (dB),
+           drive/drive2 = gain of the two clipping stages, bass/mid/treble/presence = tone stack (dB),
+           hm2 = Boss HM-2 "Swedish chainsaw" EQ after the first stage, dbl = double-tracked L/R,
+           verb = reverb send, level = output trim.
+   bass:   drive = grind stage gain, blend = share of the distorted path vs the clean low end. */
 export const TONES = {
-  highgain: { label: 'High gain', hp: 130, drive: 28, lp: 4600, level: 0.2, prog: 30 },
-  crunch: { label: 'Crunch', hp: 90, drive: 5, lp: 5200, level: 0.3, prog: 29 },
-  clean: { label: 'Clean', hp: 60, drive: 0.9, lp: 6500, level: 0.9, prog: 27 },
-  bass: { label: 'Clean bass', hp: 30, drive: 2.2, lp: 2200, level: 0.5, prog: 34 },
-  bassdrive: { label: 'Dirty bass', hp: 40, drive: 9, lp: 3000, level: 0.3, prog: 34 }
+  highgain: {
+    label: 'High gain',
+    amp: 'guitar',
+    prog: 30,
+    tight: 140,
+    boost: 7,
+    drive: 30,
+    drive2: 3,
+    bass: 3,
+    mid: -3,
+    treble: 2,
+    presence: 3,
+    level: 0.17,
+    dbl: 1,
+    verb: 0.05
+  },
+  djent: {
+    label: 'Tight / djent',
+    amp: 'guitar',
+    prog: 30,
+    tight: 210,
+    boost: 9,
+    drive: 26,
+    drive2: 2.5,
+    bass: 4,
+    mid: -6,
+    treble: 4,
+    presence: 5,
+    level: 0.17,
+    dbl: 1,
+    verb: 0.04
+  },
+  chainsaw: {
+    label: 'Chainsaw (HM-2)',
+    amp: 'guitar',
+    prog: 30,
+    tight: 70,
+    boost: 0,
+    hm2: 1,
+    drive: 40,
+    drive2: 4,
+    bass: 1,
+    mid: 1,
+    treble: 1,
+    presence: 2,
+    level: 0.13,
+    dbl: 1,
+    verb: 0.05
+  },
+  crunch: {
+    label: 'Crunch',
+    amp: 'guitar',
+    prog: 29,
+    tight: 90,
+    boost: 3,
+    drive: 6,
+    drive2: 1.5,
+    bass: 1,
+    mid: 0,
+    treble: 1,
+    presence: 1,
+    level: 0.26,
+    dbl: 1,
+    verb: 0.1
+  },
+  clean: {
+    label: 'Clean',
+    amp: 'guitar',
+    prog: 27,
+    tight: 60,
+    boost: 0,
+    drive: 1,
+    drive2: 1,
+    bass: 0,
+    mid: 0,
+    treble: 2,
+    presence: 0,
+    level: 0.55,
+    dbl: 0,
+    verb: 0.28
+  },
+  bass: { label: 'Clean bass', amp: 'bass', prog: 34, drive: 3, blend: 0.25, level: 0.55, verb: 0 },
+  bassdrive: { label: 'Dirty bass', amp: 'bass', prog: 34, drive: 24, blend: 0.65, level: 0.45, verb: 0 }
 };
-export const TONES_BY_TYPE = { guitar: ['highgain', 'crunch', 'clean'], bass: ['bass', 'bassdrive'] };
+export const TONES_BY_TYPE = {
+  guitar: ['highgain', 'djent', 'chainsaw', 'crunch', 'clean'],
+  bass: ['bass', 'bassdrive']
+};
 export const DRUMS = [
   { id: 'cr', label: 'CR', name: 'Crash', midi: 49, lv: 0.5 },
   { id: 'ch', label: 'CH', name: 'China', midi: 52, lv: 0.5 },
