@@ -1,6 +1,7 @@
 import './styles.css';
+import './themes/poster.css';
 import './ui/events';
-import { LIB } from './core/state';
+import { library } from './core/state';
 import { connect, loadLocal } from './sync/cloud';
 import { openSong } from './ui/render';
 
@@ -10,5 +11,5 @@ if (import.meta.env.MODE !== 'production') {
 }
 
 loadLocal();
-openSong(LIB.currentId);
+openSong(library.currentId);
 connect();

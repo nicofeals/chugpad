@@ -15,20 +15,22 @@ npm run dev        # local dev server with hot reload
 npm test           # unit tests
 npm run typecheck  # TypeScript check
 npm run build      # production build in dist/
+npm run format     # format the code with Prettier
 ```
 
 The project is TypeScript built with [Vite](https://vite.dev). There is no UI framework: screens are rendered from
 template strings in `src/ui`.
 
-| Folder | What lives there |
-| --- | --- |
-| `src/core` | Song model and types, constants (tunings, drum kit), note logic, drum patterns |
-| `src/audio` | Sound synthesis and playback scheduling |
-| `src/sync` | Saved format, merging of simultaneous edits, Firebase sign-in and sharing |
-| `src/io` | Guitar Pro import/export, MIDI and text tab export |
-| `src/ui` | Rendering, editing, sheets, capture (tap or hum), actions and event wiring |
-| `tests` | Unit tests for the logic that has no screen |
-| `public` | Files copied as-is, including `firebase-config.js` |
+| Folder       | What lives there                                                                                 |
+| ------------ | ------------------------------------------------------------------------------------------------ |
+| `src/core`   | Song model and types, constants (tunings, drum kit), note logic, drum patterns                   |
+| `src/audio`  | Sound synthesis and playback scheduling                                                          |
+| `src/sync`   | Saved format, merging of simultaneous edits, Firebase sign-in and sharing                        |
+| `src/io`     | Guitar Pro import/export, MIDI and text tab export                                               |
+| `src/ui`     | Rendering, editing, sheets, capture (tap or hum), actions and event wiring                       |
+| `src/themes` | The look: `poster.css` is the gig poster theme (colours, type, edges) on top of `src/styles.css` |
+| `tests`      | Unit tests for the logic that has no screen                                                      |
+| `public`     | Files copied as-is, including `firebase-config.js`                                               |
 
 In development builds every module's exports are reachable from the browser console as `window.__chug`.
 

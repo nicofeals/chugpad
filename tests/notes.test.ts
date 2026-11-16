@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { blankSong, stepsOfBar } from './helpers';
 import { drumPattern, fillFrom, noteLen } from '../src/core/notes';
-import { LANE } from '../src/core/constants';
+import { drumLane } from '../src/core/constants';
 
 test('a note rings until the next note or a rest', () => {
   const song = blankSong();
@@ -24,12 +24,17 @@ test('drums can put a kick under every guitar note', () => {
   const song = blankSong();
   song.tracks[0].bars[0] = { '0_5': { f: 0 }, '3_5': { f: 0 }, '10_4': { f: 2 } };
   fillFrom(song, 3, 0, 0);
-  const kick = LANE('kk');
+  const kick = drumLane('kk');
   assert.deepEqual(Object.keys(song.tracks[3].bars[0]).sort(), ['0_' + kick, '10_' + kick, '3_' + kick].sort());
 });
 
 test('drum patterns stay inside the bar in any time signature', () => {
-  for (const bar of [{ n: 4, d: 4, g: 4 }, { n: 7, d: 8, g: 4 }, { n: 4, d: 4, g: 3 }, { n: 5, d: 4, g: 6 }]) {
+  for (const bar of [
+    { n: 4, d: 4, g: 4 },
+    { n: 7, d: 8, g: 4 },
+    { n: 4, d: 4, g: 3 },
+    { n: 5, d: 4, g: 6 }
+  ]) {
     for (const name of ['groove', 'double', 'thrash', 'blast', 'gallop', 'half', 'fill']) {
       const cells = drumPattern(name, bar);
       assert.ok(Object.keys(cells).length > 0, name);

@@ -1,0 +1,430 @@
+/*
+ * Gig poster theme: black ink on paper, one spot colour per track, heavy condensed type, hard edges.
+ * styles.css holds layout and the default look; this file only changes the look.
+ */
+:root {
+  --bg: #e6e4de;
+  --surface: #e6e4de;
+  --raised: #f1efe9;
+  --ink: #111111;
+  --dim: #4a4843;
+  --line: #111111;
+  --tick: rgba(17, 17, 17, 0.1);
+  --beat: rgba(17, 17, 17, 0.06);
+  --edge: #111111;
+  --pm: #111111;
+  --on-acc: #111111;
+  --t0: #ff4a1c;
+  --t1: #f2b705;
+  --t2: #19c3a6;
+  --t3: #b68cff;
+  --danger: #b3261e;
+  --blend: multiply;
+  --ui: 'Archivo Narrow', 'Arial Narrow', system-ui, sans-serif;
+  --cond: 'Archivo Narrow', 'Arial Narrow', system-ui, sans-serif;
+  --display: 'Anton', Impact, 'Arial Narrow', sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #121110;
+    --surface: #121110;
+    --raised: #1d1b19;
+    --ink: #e6e4de;
+    --dim: #b3afa6;
+    --line: #e6e4de;
+    --tick: rgba(230, 228, 222, 0.12);
+    --beat: rgba(230, 228, 222, 0.07);
+    --edge: #e6e4de;
+    --pm: #e6e4de;
+    --on-acc: #111111;
+    --t0: #ff4a1c;
+    --t1: #f2b705;
+    --t2: #19c3a6;
+    --t3: #b68cff;
+    --danger: #ff8a80;
+    --blend: screen;
+  }
+}
+:root[data-theme='dark'] {
+  --bg: #121110;
+  --surface: #121110;
+  --raised: #1d1b19;
+  --ink: #e6e4de;
+  --dim: #b3afa6;
+  --line: #e6e4de;
+  --tick: rgba(230, 228, 222, 0.12);
+  --beat: rgba(230, 228, 222, 0.07);
+  --edge: #e6e4de;
+  --pm: #e6e4de;
+  --on-acc: #111111;
+  --t0: #ff4a1c;
+  --t1: #f2b705;
+  --t2: #19c3a6;
+  --t3: #b68cff;
+  --danger: #ff8a80;
+  --blend: screen;
+}
+
+body {
+  font-weight: 700;
+}
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+
+/* header: poster title, tempo stamp, halftone corner */
+#top {
+  position: relative;
+  padding-bottom: 8px;
+  border-bottom: 4px solid var(--ink);
+}
+#top::before {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 150px;
+  height: 100%;
+  background: radial-gradient(var(--ink) 1.3px, transparent 1.7px) 0 0 / 7px 7px;
+  pointer-events: none;
+}
+#titleB {
+  position: relative;
+  font: 400 28px/1 var(--display);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+#titleB small {
+  display: inline-block;
+  font: 700 12px var(--cond);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--on-acc);
+  background: var(--acc);
+  border: 2px solid var(--ink);
+  padding: 1px 6px;
+  transform: rotate(-3deg);
+  vertical-align: 5px;
+}
+.tag {
+  border: 2px solid var(--ink);
+  border-radius: 0;
+  color: var(--ink);
+  background: var(--bg);
+  text-transform: uppercase;
+  vertical-align: 5px;
+}
+.ib {
+  position: relative;
+  border-radius: 0;
+  border: 2px solid var(--ink);
+  background: var(--bg);
+  font: 700 14px var(--cond);
+  text-transform: uppercase;
+}
+
+/* track tabs: flat blocks, the open track is inked in */
+#tabs {
+  gap: 0;
+  padding: 0;
+  border-bottom: 4px solid var(--ink);
+}
+.tab {
+  flex: 1 0 auto;
+  height: 44px;
+  border-radius: 0;
+  border: 0;
+  border-right: 2px solid var(--ink);
+  color: var(--ink);
+  font: 700 14px var(--cond);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.tab::before {
+  width: 10px;
+  height: 10px;
+  border-radius: 0;
+  outline: 1.5px solid var(--ink);
+}
+.tab.on {
+  background: var(--ink);
+  color: var(--bg);
+}
+.tab.on::before {
+  outline-color: var(--bg);
+}
+
+/* score: big bar numbers, thick strings, palm mutes as inked chips */
+#score {
+  padding-top: 10px;
+}
+.bar-head {
+  height: 34px;
+}
+.bar-btn {
+  height: 32px;
+  padding: 0 8px 0 2px;
+  font: 400 28px/1 var(--display);
+  color: var(--ink);
+}
+.bar-btn span {
+  font: 700 12px var(--cond);
+}
+.bar.current .bar-btn {
+  padding-left: 6px;
+  background: var(--acc);
+  color: var(--on-acc);
+}
+.sig,
+.gl,
+.tp {
+  font: 700 12px var(--cond);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.tp {
+  border: 2px solid var(--ink);
+  padding: 0 5px;
+  transform: rotate(-2deg);
+}
+.lp {
+  border-radius: 0;
+  text-transform: uppercase;
+}
+.gutter span {
+  color: var(--ink);
+  font-weight: 700;
+}
+.grid {
+  border-left: 4px solid var(--ink);
+  border-right: 2px solid var(--ink);
+  background:
+    linear-gradient(to right, var(--tick) 1px, transparent 1px) 0 0 / calc(100% / var(--steps)) 100%,
+    linear-gradient(
+        to bottom,
+        transparent calc(var(--rh) / 2 - 1px),
+        var(--ink) calc(var(--rh) / 2 - 1px),
+        var(--ink) calc(var(--rh) / 2 + 1px),
+        transparent calc(var(--rh) / 2 + 1px)
+      )
+      0 0 / 100% var(--rh);
+}
+.n {
+  font: 400 16px / var(--rh) var(--display);
+}
+.n b {
+  font-weight: 400;
+  border-radius: 0;
+  padding: 0 2px;
+}
+.n.pm b {
+  background: var(--ink);
+  color: var(--bg);
+  padding: 0 3px;
+}
+.n i {
+  color: var(--ink);
+}
+.n.d.v3 b {
+  outline: 2px solid var(--ink);
+}
+.n.d.cym.v3 b {
+  outline: 0;
+  color: var(--ink);
+  background: var(--acc);
+}
+.pmrow {
+  display: none;
+}
+.cursor {
+  border: 2px solid var(--ink);
+  border-radius: 0;
+  background: var(--acc);
+  mix-blend-mode: var(--blend);
+}
+.curcol {
+  background: var(--beat);
+}
+.playhead {
+  background: color-mix(in srgb, var(--acc) 45%, transparent);
+  border-left: 3px solid var(--ink);
+}
+#addbar {
+  border-radius: 0;
+  border: 2px dashed var(--ink);
+  color: var(--ink);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* transport and keypad: one hard grid */
+#bottom {
+  padding: 0;
+  background: var(--bg);
+  border-top: 4px solid var(--ink);
+}
+#transport {
+  gap: 0;
+}
+#play {
+  height: 50px;
+  border-radius: 0;
+  font: 400 22px var(--display);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--on-acc);
+}
+.tg {
+  height: 50px;
+  border-radius: 0;
+  border: 0;
+  border-left: 2px solid var(--ink);
+  color: var(--ink);
+  font: 700 13px var(--cond);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.tg.on {
+  background: var(--ink);
+  color: var(--bg);
+}
+#pos {
+  font: 700 12px var(--cond);
+  color: var(--ink);
+  text-transform: uppercase;
+}
+#pad {
+  gap: 2px;
+  margin-top: 0;
+  background: var(--ink);
+  border-top: 2px solid var(--ink);
+}
+.row {
+  gap: 2px;
+}
+.k,
+.k.s {
+  border-radius: 0;
+  border: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 700 14px var(--cond);
+  text-transform: uppercase;
+}
+.k:active {
+  transform: none;
+  background: var(--acc);
+  color: var(--on-acc);
+}
+.k.num {
+  height: 50px;
+  font: 400 24px var(--display);
+}
+.k.on,
+.k.pmk.on {
+  background: var(--ink);
+  color: var(--bg);
+}
+.ro {
+  padding: 10px 12px;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+/* sheets */
+#card {
+  border-radius: 0;
+  border-top: 4px solid var(--ink);
+  background: var(--bg);
+}
+#card h2 {
+  font: 400 26px var(--display);
+  text-transform: uppercase;
+}
+#card h2 button {
+  border-radius: 0;
+  border: 2px solid var(--ink);
+  color: var(--ink);
+  font: 700 13px var(--cond);
+  text-transform: uppercase;
+}
+#card h3 {
+  font: 700 12px var(--cond);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink);
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 3px;
+}
+.b,
+label.b {
+  border-radius: 0;
+  border: 2px solid var(--ink);
+  background: var(--bg);
+  font: 700 14px var(--cond);
+}
+.b.on {
+  background: var(--ink);
+  color: var(--bg);
+  border-color: var(--ink);
+}
+.fld input[type='text'],
+.fld input[type='number'],
+.fld input[type='email'],
+.fld select,
+textarea {
+  border-radius: 0;
+  border: 2px solid var(--ink);
+  background: var(--raised);
+}
+.fld input[type='number'] {
+  font: 400 22px var(--display);
+}
+.fld input[type='range'],
+.chk input {
+  accent-color: var(--ink);
+}
+.trk {
+  border-left-width: 8px;
+}
+.padb {
+  border-radius: 0;
+  border: 2px solid var(--ink);
+  font: 400 24px var(--display);
+  text-transform: uppercase;
+}
+#recbox {
+  border-radius: 0;
+  border: 2px solid var(--ink);
+}
+#recmsg {
+  font: 400 24px var(--display);
+}
+#toast {
+  border-radius: 0;
+  border: 2px solid var(--bg);
+  font: 700 14px var(--cond);
+}
+
+@media (min-width: 980px) {
+  #bottom {
+    padding: 0;
+    border-top: 0;
+    border-left: 4px solid var(--ink);
+  }
+  #pad {
+    margin-top: 0;
+  }
+  #pos {
+    padding: 8px 10px;
+    border-top: 2px solid var(--ink);
+  }
+  #card {
+    border: 4px solid var(--ink);
+  }
+}

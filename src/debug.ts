@@ -16,10 +16,55 @@ import * as exporters from './io/export';
 import * as guitarpro from './io/guitarpro';
 
 export function install(): void {
-  const mods: Record<string, unknown>[] = [constants, state, notes, wire, cloud, engine, playback, render, editing, sheets, capture, actions, exporters, guitarpro];
-  const find = (key: string | symbol) => (typeof key === 'string' ? mods.find((m) => key in m) : undefined);
-  (window as any).__chug = new Proxy({}, {
-    has: (_t, key) => !!find(key),
-    get: (_t, key) => { const m = find(key); return m ? m[key as string] : undefined; }
-  });
+  const mods: Record<string, unknown>[] = [
+    constants,
+    state,
+    notes,
+    wire,
+    cloud,
+    engine,
+    playback,
+    render,
+    editing,
+    sheets,
+    capture,
+    actions,
+    exporters,
+    guitarpro
+  ];
+  // The end-to-end tests were written against the original short names; map those to today's names.
+  const aliases: Record<string, string> = {
+    S: 'appState',
+    LIB: 'library',
+    T: 'currentTrack',
+    A: 'audioState',
+    P: 'player',
+    REC: 'recorder',
+    ME: 'myId',
+    EMAIL: 'myEmail',
+    DBX: 'cloudDb',
+    AUTH: 'authClient',
+    DIR: 'sharedWithMe',
+    up: 'uploads',
+    encCells: 'encodeCells',
+    decCells: 'decodeCells',
+    ACT: 'actionHandlers',
+    SHEETS: 'sheetViews',
+    loadAT: 'loadAlphaTab',
+    audio: 'ensureAudio',
+    $: 'qs',
+    LANE: 'drumLane'
+  };
+  const find = (key: string | symbol) =>
+    typeof key === 'string' ? mods.find((m) => (aliases[key] ?? key) in m) : undefined;
+  (window as any).__chug = new Proxy(
+    {},
+    {
+      has: (_t, key) => !!find(key),
+      get: (_t, key) => {
+        const m = find(key);
+        return m ? m[aliases[key as string] ?? (key as string)] : undefined;
+      }
+    }
+  );
 }

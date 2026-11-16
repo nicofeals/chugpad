@@ -1,37 +1,40 @@
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Chugpad</title>
-<meta name="theme-color" content="#1a171e">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap">
-</head>
-<body>
-<header id="top">
-  <button id="titleB" data-act="song" aria-label="Song settings"></button>
-  <button class="ib" data-act="mixer">Mix</button>
-  <button class="ib" id="undoB" data-act="undo" aria-label="Undo">↶</button>
-  <button class="ib" id="redoB" data-act="redo" aria-label="Redo">↷</button>
-</header>
-<nav id="tabs" aria-label="Tracks"></nav>
-<main id="score"></main>
-<footer id="bottom">
-  <div id="transport">
-    <button id="play" data-act="play"></button>
-    <button class="tg" id="loopB" data-act="loop">Loop</button>
-    <button class="tg" id="metroB" data-act="metro">Click</button>
-    <button class="tg" data-act="capture">Capture</button>
-    <span id="pos"></span>
-    <button class="tg" id="padB" data-act="pad">Keys</button>
-  </div>
-  <div id="pad"></div>
-</footer>
-<div id="toast" role="status"></div>
-<div id="sheet" hidden><div id="card" role="dialog" aria-modal="true"></div></div>
-<script src="firebase-config.js"></script>
-<script type="module" src="/src/main.ts"></script>
-</body>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Chugpad</title>
+    <meta name="theme-color" content="#111111" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo+Narrow:wght@500;700&display=swap"
+    />
+  </head>
+  <body>
+    <header id="top">
+      <button id="titleB" data-act="song" aria-label="Song settings"></button>
+      <button class="ib" data-act="mixer">Mix</button>
+      <button class="ib" id="undoB" data-act="undo" aria-label="Undo">↶</button>
+      <button class="ib" id="redoB" data-act="redo" aria-label="Redo">↷</button>
+    </header>
+    <nav id="tabs" aria-label="Tracks"></nav>
+    <main id="score"></main>
+    <footer id="bottom">
+      <div id="transport">
+        <button id="play" data-act="play"></button>
+        <button class="tg" id="loopB" data-act="loop">Loop</button>
+        <button class="tg" id="metroB" data-act="metro">Click</button>
+        <button class="tg" data-act="capture">Capture</button>
+        <span id="pos"></span>
+        <button class="tg" id="padB" data-act="pad">Keys</button>
+      </div>
+      <div id="pad"></div>
+    </footer>
+    <div id="toast" role="status"></div>
+    <div id="sheet" hidden><div id="card" role="dialog" aria-modal="true"></div></div>
+    <script src="firebase-config.js"></script>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
 </html>
