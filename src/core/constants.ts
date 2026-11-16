@@ -35,10 +35,11 @@ export const BASS_TUNINGS = {
 };
 /* Amp models (see audio/engine.ts).
    guitar: tight = pre-drive highpass (Hz), boost = screamer-style mid push before the amp (dB),
-           drive/drive2 = gain of the two clipping stages, bass/mid/treble/presence = tone stack (dB),
-           hm2 = Boss HM-2 "Swedish chainsaw" EQ after the first stage, dbl = double-tracked L/R,
-           verb = reverb send, level = output trim.
-   bass:   drive = grind stage gain, blend = share of the distorted path vs the clean low end. */
+           stages = gain of the three cascaded preamp clipping stages, inter = level between stages,
+           bass/mid/treble/presence = tone stack (dB), hm2 = Boss HM-2 "Swedish chainsaw" EQ after the
+           first stage, dbl = double-tracked L/R, verb = reverb send, level = output trim.
+   bass:   stages = gain of the two grind stages, blend = share of the distorted path,
+           cleanLp = top of the clean (DI) path in Hz. */
 export const TONES = {
   highgain: {
     label: 'High gain',
@@ -46,8 +47,8 @@ export const TONES = {
     prog: 30,
     tight: 140,
     boost: 7,
-    drive: 30,
-    drive2: 3,
+    stages: [5, 7, 3],
+    inter: 0.5,
     bass: 3,
     mid: -3,
     treble: 2,
@@ -60,13 +61,13 @@ export const TONES = {
     label: 'Tight / djent',
     amp: 'guitar',
     prog: 30,
-    tight: 210,
+    tight: 200,
     boost: 9,
-    drive: 26,
-    drive2: 2.5,
+    stages: [4, 6, 3],
+    inter: 0.5,
     bass: 4,
     mid: -6,
-    treble: 4,
+    treble: 3,
     presence: 5,
     level: 0.17,
     dbl: 1,
@@ -79,13 +80,13 @@ export const TONES = {
     tight: 70,
     boost: 0,
     hm2: 1,
-    drive: 40,
-    drive2: 4,
+    stages: [8, 5, 3],
+    inter: 0.5,
     bass: 1,
     mid: 1,
     treble: 1,
     presence: 2,
-    level: 0.13,
+    level: 0.14,
     dbl: 1,
     verb: 0.05
   },
@@ -95,8 +96,8 @@ export const TONES = {
     prog: 29,
     tight: 90,
     boost: 3,
-    drive: 6,
-    drive2: 1.5,
+    stages: [2.5, 2, 1.2],
+    inter: 0.6,
     bass: 1,
     mid: 0,
     treble: 1,
@@ -111,18 +112,36 @@ export const TONES = {
     prog: 27,
     tight: 60,
     boost: 0,
-    drive: 1,
-    drive2: 1,
+    stages: [1, 1, 1],
+    inter: 1,
     bass: 0,
     mid: 0,
     treble: 2,
     presence: 0,
-    level: 0.55,
+    level: 0.5,
     dbl: 0,
     verb: 0.28
   },
-  bass: { label: 'Clean bass', amp: 'bass', prog: 34, drive: 3, blend: 0.25, level: 0.55, verb: 0 },
-  bassdrive: { label: 'Dirty bass', amp: 'bass', prog: 34, drive: 24, blend: 0.65, level: 0.45, verb: 0 }
+  bass: {
+    label: 'Clean bass',
+    amp: 'bass',
+    prog: 34,
+    stages: [2, 1.5],
+    blend: 0.2,
+    cleanLp: 4500,
+    level: 0.55,
+    verb: 0
+  },
+  bassdrive: {
+    label: 'Dirty bass',
+    amp: 'bass',
+    prog: 34,
+    stages: [6, 4],
+    blend: 0.6,
+    cleanLp: 250,
+    level: 0.45,
+    verb: 0
+  }
 };
 export const TONES_BY_TYPE = {
   guitar: ['highgain', 'djent', 'chainsaw', 'crunch', 'clean'],

@@ -86,12 +86,14 @@ function shaperCurve(k, bias = 0) {
   const key = k + '|' + bias;
   let cu = curves.get(key);
   if (cu) return cu;
+  // bias shifts the operating point (even harmonics, like a tube) without creating a dead zone:
+  // it is added after the gain, so small signals still pass with slope ~k.
   const n = 4096,
-    off = Math.tanh(k * bias);
+    off = Math.tanh(bias);
   cu = new Float32Array(n);
   for (let i = 0; i < n; i++) {
     const x = (i / (n - 1)) * 2 - 1;
-    cu[i] = Math.tanh(k * (x + bias)) - off;
+    cu[i] = Math.tanh(k * x + bias) - off;
   }
   const norm = Math.max(Math.abs(cu[0]), Math.abs(cu[n - 1])) || 1;
   for (let i = 0; i < n; i++) cu[i] /= norm;
@@ -134,52 +136,70 @@ function makeChain(c) {
   };
 }
 function guitarAmp(c, tn) {
-  const ch = makeChain(c);
-  ch.filter('lowpass', 5200, 1.4); // pickup resonance
+  const [kA, kB, kC] = tn.stages,
+    ch = makeChain(c);
+  ch.filter('lowpass', 4500, 1.2); // humbucker resonance
   ch.filter('highpass', tn.tight, 0.7); // tighten the low end before the gain
-  if (tn.boost) ch.filter('peaking', 800, 0.9, tn.boost); // screamer-style mid push
-  ch.shaper(tn.drive, 0.12); // stage 1, asymmetric -> even harmonics
-  ch.filter('highpass', 30, 0.7); // DC block
+  if (tn.boost) ch.filter('peaking', 750, 0.8, tn.boost); // screamer-style mid push
+  // three cascaded preamp stages with coupling filters in between (smoother than one huge clipper)
+  ch.shaper(kA, 0.25);
+  ch.filter('highpass', 90, 0.6);
+  ch.filter('lowpass', 10000, 0.5);
   if (tn.hm2) {
     // HM-2 with every knob maxed: huge lows and upper mids
     ch.filter('peaking', 100, 0.9, 12);
     ch.filter('peaking', 1100, 1, 11);
     ch.filter('peaking', 2400, 1.5, 4);
-    ch.gain(0.25);
-  } else ch.gain(0.6);
-  ch.filter('lowpass', 7500, 0.6); // inter-stage fizz control
-  ch.shaper(tn.drive2); // stage 2 (power amp)
+    ch.gain(tn.inter * 0.35);
+  } else ch.gain(tn.inter);
+  ch.shaper(kB, 0.15);
+  ch.filter('highpass', 110, 0.6);
+  ch.filter('lowpass', 7000, 0.5);
+  ch.gain(tn.inter);
+  ch.shaper(kC, 0.1);
+  ch.filter('highpass', 25, 0.7); // DC block
   // tone stack
   ch.filter('lowshelf', 120, null, tn.bass);
   ch.filter('peaking', 500, 0.7, tn.mid);
   ch.filter('highshelf', 2800, null, tn.treble);
   ch.filter('peaking', 4000, 1, tn.presence);
-  // 4x12 closed-back cab with V30-ish speakers, close mic
-  ch.filter('highpass', 70, 0.8);
-  ch.filter('peaking', 115, 1.3, 3);
-  ch.filter('peaking', 1600, 1.4, -2.5);
-  ch.filter('peaking', 2600, 1.6, 3.5);
-  ch.filter('lowpass', 5200, 0.9);
-  ch.filter('lowpass', 6800, 0.6);
+  // power amp
+  ch.gain(0.5);
+  ch.shaper(1.5);
+  // 4x12 closed-back cab with V30-type speakers, close mic: resonance bump, upper-mid peak,
+  // cone breakup notch and a steep top-end rolloff
+  ch.filter('highpass', 75, 0.8);
+  ch.filter('peaking', 110, 1.4, 4);
+  ch.filter('peaking', 400, 1, -2);
+  ch.filter('peaking', 2700, 1.8, 4);
+  ch.filter('peaking', 4200, 3, -4);
+  ch.filter('lowpass', 5000, 0.8);
+  ch.filter('lowpass', 6000, 0.6);
+  ch.filter('lowpass', 9000, 0.5);
   ch.gain(tn.level);
   return ch;
 }
 function bassAmp(c, tn) {
-  const inp = c.createGain(),
+  const [kA, kB] = tn.stages,
+    inp = c.createGain(),
     sum = c.createGain();
-  // clean low end
+  // clean DI path (full range on a clean tone, just the low end on a dirty one)
   const clean = makeChain(c);
-  clean.filter('lowpass', 300, 0.6);
-  clean.gain((1 - tn.blend) * 1.2);
+  clean.filter('lowpass', tn.cleanLp, 0.6);
+  clean.gain((1 - tn.blend) * 1.4);
   // distorted top end
   const dirty = makeChain(c);
-  dirty.filter('highpass', 180, 0.7);
+  dirty.filter('highpass', 200, 0.7);
   dirty.filter('peaking', 900, 0.8, 4);
-  dirty.shaper(tn.drive, 0.08);
-  dirty.filter('highpass', 30, 0.7);
-  dirty.filter('lowpass', 3800, 0.7);
+  dirty.shaper(kA, 0.2);
+  dirty.filter('highpass', 60, 0.6);
+  dirty.filter('lowpass', 8000, 0.5);
+  dirty.gain(0.6);
+  dirty.shaper(kB, 0.1);
+  dirty.filter('highpass', 25, 0.7);
+  dirty.filter('lowpass', 3500, 0.7);
   dirty.filter('peaking', 1500, 1, 3); // clank
-  dirty.gain(tn.blend * 0.8);
+  dirty.gain(tn.blend * 0.7);
   inp.connect(clean.first);
   inp.connect(dirty.first);
   clean.last.connect(sum);
@@ -252,49 +272,77 @@ export function applyMix(ti) {
 }
 
 /* ---------- strings ---------- */
+/* string models. tau = fundamental decay (s), hiT = decay of the 3 kHz region (s),
+   alpha = harmonic rolloff of the pick excitation, pick = pick position (fraction of the string from the bridge),
+   coils = pickup coil positions, floor = how much the pickup lets through regardless of position. */
+const GTR = { pick: 0.13, coils: [0.085, 0.105], floor: 0.25 },
+  BASS = { pick: 0.12, coils: [0.14, 0.17], floor: 0.4 };
+const STRINGS: any = {
+  guitar: {
+    n: { ...GTR, dur: 2.6, tau: (m) => (m < 50 ? 4 : 3), hiT: 0.5, alpha: 1.4 },
+    p: { ...GTR, dur: 0.45, tau: () => 0.12, hiT: 0.06, alpha: 1.9 },
+    x: { dur: 0.07, tau: () => 0.012, hiT: 0.01 }
+  },
+  bass: {
+    n: { ...BASS, dur: 2.6, tau: (m) => (m < 40 ? 5 : 4), hiT: 0.3, alpha: 1.5 },
+    p: { ...BASS, dur: 0.5, tau: () => 0.18, hiT: 0.06, alpha: 2 },
+    x: { dur: 0.07, tau: () => 0.012, hiT: 0.01 }
+  }
+};
 export function stringBuffer(ti, midi, kind, side = 0, bass = false) {
-  // plucked-string buffer (Karplus-Strong), cached per pitch / articulation / variant
-  const key = (bass ? 'b' : 'g') + ((ti % 2) * 2 + side) + '|' + midi + '|' + kind;
+  // plucked string (Karplus-Strong loop with a physical pluck shape), cached per pitch / articulation / take
+  const variant = (ti % 2) * 2 + side,
+    key = (bass ? 'b' : 'g') + variant + '|' + midi + '|' + kind;
   let e = audioState.ks.get(key);
   if (e) return e;
   if (audioState.ks.size > 200) audioState.ks.clear();
   const c = audioState.ctx,
     sr = c.sampleRate,
-    f = 440 * Math.pow(2, (midi - 69) / 12);
-  const P = bass
-    ? {
-        n: { dur: 2.6, tau: midi < 40 ? 4 : 3, bright: 0.75 },
-        p: { dur: 0.5, tau: 0.16, bright: 0.35 },
-        x: { dur: 0.07, tau: 0.012, bright: 0.3 }
-      }[kind]
-    : {
-        n: { dur: 2.6, tau: midi < 50 ? 3 : 2.2, bright: 0.6 },
-        p: { dur: 0.45, tau: 0.1, bright: 0.3 },
-        x: { dur: 0.07, tau: 0.012, bright: 0.3 }
-      }[kind];
-  const s = bass ? 0.5 : 0.45, // loop filter weight: < 0.5 keeps highs ringing longer
+    f = 440 * Math.pow(2, (midi - 69) / 12),
+    P = STRINGS[bass ? 'bass' : 'guitar'][kind];
+  // loop filter y = (1-s)·y[n] + s·y[n+1]: pick s so that the 3 kHz region decays in about hiT seconds
+  // whatever the pitch (a fixed s=0.5 kills the highs of upper strings in a few ms -> plinky, fake)
+  const sn = Math.pow(Math.sin((Math.PI * 3000) / sr), 2),
+    x = (1 - Math.exp(-2 / (f * P.hiT))) / (4 * sn),
+    s = x >= 0.25 ? 0.5 : Math.max(0.02, (1 - Math.sqrt(1 - 4 * x)) / 2),
     N = Math.max(2, Math.round(sr / f - s)),
     len = Math.floor(sr * P.dur),
     buf = c.createBuffer(1, len, sr),
     out = buf.getChannelData(0),
-    ex = new Float32Array(N),
     ring = new Float32Array(N);
-  let lp = 0,
-    mean = 0;
-  for (let i = 0; i < N; i++) {
-    lp += P.bright * (Math.random() * 2 - 1 - lp);
-    ex[i] = lp;
+  if (kind === 'x') {
+    // dead note: just a muted scratch
+    let lp = 0;
+    for (let i = 0; i < N; i++) {
+      lp += 0.3 * (Math.random() * 2 - 1 - lp);
+      ring[i] = lp;
+    }
+  } else {
+    // one period of a string picked at `pick` and heard through a humbucker's two coils:
+    // harmonic h has amplitude sin(π·h·pick) · pickup(h) / h^alpha
+    const pick = P.pick + (variant - 1.5) * 0.008 + Math.random() * 0.006,
+      H = Math.max(1, Math.min(Math.floor(N / 2) - 1, Math.floor(12000 / f)));
+    for (let h = 1; h <= H; h++) {
+      const coils = (Math.sin(Math.PI * h * P.coils[0]) + Math.sin(Math.PI * h * P.coils[1])) / 2,
+        pu = P.floor + (1 - P.floor) * coils,
+        amp = (Math.sin(Math.PI * h * pick) * pu) / Math.pow(h, P.alpha),
+        w = (2 * Math.PI * h) / N;
+      for (let i = 0; i < N; i++) ring[i] += amp * Math.sin(w * i);
+    }
+    // a little noise so every take is slightly different, like real picking
+    let pk = 0,
+      lp = 0;
+    for (let i = 0; i < N; i++) pk = Math.max(pk, Math.abs(ring[i]));
+    for (let i = 0; i < N; i++) {
+      lp += 0.5 * (Math.random() * 2 - 1 - lp);
+      ring[i] += lp * 0.04 * pk;
+    }
   }
-  // pick position comb: picking near the bridge removes some low harmonics -> brighter, more "pick" in the attack
-  const pick = (bass ? 0.18 : 0.12) + side * 0.03,
-    D = Math.max(1, Math.round(N * pick));
-  for (let i = 0; i < N; i++) {
-    ring[i] = ex[i] - 0.85 * ex[(i + D) % N];
-    mean += ring[i];
-  }
+  let mean = 0;
+  for (let i = 0; i < N; i++) mean += ring[i];
   mean /= N;
   for (let i = 0; i < N; i++) ring[i] -= mean;
-  const loss = Math.exp(-(N + s) / (sr * P.tau));
+  const loss = Math.exp(-(N + s) / (sr * P.tau(midi)));
   let idx = 0,
     peak = 0;
   for (let i = 0; i < len; i++) {
@@ -334,6 +382,11 @@ export function playNote(ti, midi, t, dur, cell, next) {
       g = c.createGain();
     src.buffer = e.buf;
     src.playbackRate.value = rate;
+    if (kind !== 'x') {
+      // the pick stretches the string: it starts a few cents sharp and settles
+      src.playbackRate.setValueAtTime(rate * 1.004, ts);
+      src.playbackRate.setTargetAtTime(rate, ts + 0.002, 0.025);
+    }
     g.gain.setValueAtTime(0, ts);
     g.gain.linearRampToValueAtTime(peak, ts + 0.003);
     g.gain.setValueAtTime(peak, Math.max(ts + 0.004, end - 0.012));
